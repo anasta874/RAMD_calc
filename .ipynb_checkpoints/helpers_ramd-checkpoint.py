@@ -8,6 +8,13 @@ def load_excel(file_path, skip_rows=2):
     data = pd.read_excel(file_path, header=None).to_numpy()
     return data[skip_rows:, :]
 
+def filter_data(force_data):
+    # Filtering valid data where the second column has positive values and is not NaN
+    valid_data = (force_data[:, 1] > 0) & (~np.isnan(force_data[:, 1]))
+    t = force_data[valid_data, 0]  # Select filtered time values
+    N = force_data[valid_data, 1]  # Select filtered force values
+    return t, N
+
 # Function to calculate tau and lambda values and populate lists
 def calculate_dissociation_rates(t, n, N, N_cut_max, tau_frac, tau_var, lambda_var, pend_var):
     for N_cut in range(N_cut_max):
@@ -25,6 +32,7 @@ def calculate_dissociation_rates(t, n, N, N_cut_max, tau_frac, tau_var, lambda_v
             tau_var.append(tau)
             lambda_var.append(lambda_)
             pend_var.append(pend)
+
 
 # Plot tau with a highlight on the cutoff point
 def plot_tau_with_cutoff(x_values, y_values, N_cut, tau_var, force_value, output_file=None):
