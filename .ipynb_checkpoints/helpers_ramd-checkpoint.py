@@ -1,55 +1,53 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import ScalarFormatter, FuncFormatter
+from matplotlib.ticker import FuncFormatter
 
-# Load data from Excel
+# Загрузка данных из Excel
 def load_excel(file_path, skip_rows=2):
     data = pd.read_excel(file_path, header=None).to_numpy()
     return data[skip_rows:, :]
 
+# Фильтрация данных
 def filter_data(force_data):
-    # Filtering valid data where the second column has positive values and is not NaN
     valid_data = (force_data[:, 1] > 0) & (~np.isnan(force_data[:, 1]))
-    t = force_data[valid_data, 0]  # Select filtered time values
-    N = force_data[valid_data, 1]  # Select filtered force values
+    t = force_data[valid_data, 0]  # Время
+    N = force_data[valid_data, 1]  # Значения N
     return t, N
 
-# Function to calculate tau and lambda values and populate lists
+# Функция для расчета tau и lambda
 def calculate_dissociation_rates(t, n, N, N_cut_max, tau_frac, tau_var, lambda_var, pend_var):
     for N_cut in range(N_cut_max):
-        # Filter data based on N_cut and tau_frac
+        # Фильтрация данных для линейного приближения
         t_fit = t[(N > N_cut) & (t > tau_frac)]
         n_fit = n[(N > N_cut) & (t > tau_frac)]
 
-        if len(t_fit) > 1:  # Check if there is enough data for fitting
-            # Linear fit
+        if len(t_fit) > 1:  # Проверка, достаточно ли данных для приближения
+            # Линейное приближение
             pend = np.polyfit(t_fit, n_fit, 1)
-            tau = round((1 / abs(pend[0])) / 1e4, 15)  # Scale tau
-            lambda_ = round(pend[0] * 1e4, 15)         # Scale lambda
+            tau = round((1 / abs(pend[0])) / 1e4, 15)  # Масштабирование tau
+            lambda_ = round(pend[0] * 1e4, 15)         # Масштабирование lambda
 
-            # Save results in the provided lists
+            # Сохранение результатов в списки
             tau_var.append(tau)
             lambda_var.append(lambda_)
             pend_var.append(pend)
 
-
-# Plot tau with a highlight on the cutoff point
-def plot_tau_with_cutoff(x_values, y_values, N_cut, tau_var, force_value, output_file=None):
-    plt.figure()
-    plt.plot(x_values, y_values, label=r'$\tau$ values')
-    vline = plt.axvline(x=N_cut, color='red', linestyle='--', linewidth=2)
-    plt.legend([vline], ['Cutoff point'], loc='best')
+# Функция для построения графика с выделенными линиями для N_cut и N_cut_max
+def plot_tau_with_cutoff(x_values, y_values, N_cut, N_cut_max, force_value, output_file=None):
+    plt.figure(figsize=(8, 6))
+    plt.plot(x_values, y_values, label=r'$\tau$ values', marker='o', color='blue')
+    vline_cut = plt.axvline(x=N_cut, color='red', linestyle='--', linewidth=2, label=r'$N_{cut}$')
+    vline_cut_max = plt.axvline(x=N_cut_max, color='green', linestyle='--', linewidth=2, label=r'$N_{cut\ max}$')
+    plt.legend(loc='best')
     plt.title(f"Force {force_value}", fontsize=18)
     plt.ylabel(r'$\tau$, ps', fontsize=18)
     plt.xlabel(r'$N_{cut}$', fontsize=18)
     plt.gca().yaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x / 1e4:.1f}'))
-    plt.text(0.5, max(y_values)*1.05, r'$ \times 10^4$', fontsize=16, color='black', verticalalignment='bottom', horizontalalignment='center')
+    plt.text(0.5, max(y_values) * 1.05, r'$ \times 10^4$', fontsize=16, color='black', verticalalignment='bottom', horizontalalignment='center')
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.grid(True)
-    if output_file:
-        plt.savefig(output_file)
     plt.show()
 
 # Plot the initial linear region in logarithmic coordinates
