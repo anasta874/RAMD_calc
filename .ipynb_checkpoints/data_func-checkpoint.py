@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter, FuncFormatter
 
-# Load data from Excel
 def load_excel(file_path, skip_rows=2):
     data = pd.read_excel(file_path, header=None).to_numpy()
     return data[skip_rows:, :]
@@ -23,18 +22,15 @@ def calculate_dissociation_rates(t, n, N, N_cut_max, tau_frac, tau_var, lambda_v
         n_fit = n[(N > N_cut) & (t > tau_frac)]
 
         if len(t_fit) > 1:  # Check if there is enough data for fitting
-            # Linear fit
             pend = np.polyfit(t_fit, n_fit, 1)
             tau = round((1 / abs(pend[0])) / 1e4, 15)  # Scale tau
             lambda_ = round(pend[0] * 1e4, 15)         # Scale lambda
 
-            # Save results in the provided lists
             tau_var.append(tau)
             lambda_var.append(lambda_)
             pend_var.append(pend)
 
 
-# Plot tau with a highlight on the cutoff point
 def plot_tau_with_cutoff(x_values, y_values, N_cut, tau_var, force_value, output_file=None):
     plt.figure()
     plt.plot(x_values, y_values, label=r'$\tau$ values')
@@ -52,7 +48,6 @@ def plot_tau_with_cutoff(x_values, y_values, N_cut, tau_var, force_value, output
         plt.savefig(output_file)
     plt.show()
 
-# Plot the initial linear region in logarithmic coordinates
 def plot_init_part_ln_ln(force_value, n, t, t0, tend, output_file=None):
     # Filter positive values in the range t0:tend
     valid_indices = (t[t0:tend] > 0) & (n[t0:tend] < 0)
@@ -74,7 +69,7 @@ def plot_init_part_ln_ln(force_value, n, t, t0, tend, output_file=None):
     # plt.show()
     return p, pinit
 
-# Function to plot ln(N(t)/N(0))
+# plot ln(N(t)/N(0))
 def plot_lnN(force_value, t, t_fit, n, tau_frac, pend, pinit, output_file=None):
     plt.figure()
     plt.plot(t, n, 'o', color='magenta', linewidth=1.5, label='Data')
@@ -97,7 +92,7 @@ def plot_lnN(force_value, t, t_fit, n, tau_frac, pend, pinit, output_file=None):
         plt.savefig(output_file)
     plt.show()
 
-# Function to plot N(t)
+# plot N(t)
 def plot_N(force_value, t, t_fit, N, N0, tau_frac, pend, pinit, output_file=None):
     t_fit = np.array(t_fit)
     plt.figure()
