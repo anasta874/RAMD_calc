@@ -1,10 +1,13 @@
 # Stat_func.py
 
 import numpy as np
-from scipy.optimize import curve_fit
-from scipy.stats import t
-from math import exp
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+import scipy.stats as stats
+from scipy.stats import t, probplot 
+from math import exp
+import scipy.stats as stats
+
 
 # Define linear model
 def linear_model(x, a, b):
@@ -41,8 +44,6 @@ def plot_dissociation_data(f, log_log_tau_calc, ftau, a, b, predicted_log_log_ta
     plt.plot(ftau, linear_model(ftau, a, b), label='Fit (Original Data)', color='blue', linewidth=1.5)
     plt.fill_between(ftau, linear_model(ftau, a, b) - pred_interval, linear_model(ftau, a, b) + pred_interval,
                      color='black', alpha=0.2, linestyle='--', label='68% Prediction Interval')
-
-    # Refit line for filtered data, if provided
     if a_filtered is not None and b_filtered is not None and pred_interval_filtered is not None:
         plt.plot(ftau, linear_model(ftau, a_filtered, b_filtered), '--', color='green', label='Fit (Filtered Data)')
         plt.fill_between(ftau, linear_model(ftau, a_filtered, b_filtered) - pred_interval_filtered,
@@ -56,4 +57,89 @@ def plot_dissociation_data(f, log_log_tau_calc, ftau, a, b, predicted_log_log_ta
     plt.legend(fontsize=10)
     plt.grid(True)
     plt.title("Dissociation Time Analysis with Prediction Intervals", fontsize=14)
+    plt.show()
+
+def plot_filtered_dissociation_data(f, log_log_tau_calc, ftau, f_filtered, log_log_tau_filtered, 
+                                    pred_interval_filtered, a_filtered, b_filtered, FS=22):
+  
+    plt.figure(figsize=(8, 4))
+    plt.plot(0, 3.4514, '*', color='magenta', markersize=15, label='Experimental Point')
+    plt.plot(f_filtered, log_log_tau_filtered, 'o', color='black', linewidth=0.5, label='Filtered Data Points')
+    plt.plot(ftau, a_filtered * ftau + b_filtered, color='black', linewidth=1, label='Fit (Filtered Data)')
+    plt.fill_between(ftau, (a_filtered * ftau + b_filtered) - pred_interval_filtered,
+                     (a_filtered * ftau + b_filtered) + pred_interval_filtered,
+                     color='black', alpha=0.2, linestyle='--', label='68% Prediction Interval (Filtered)')
+    plt.xlim([-5, 650])
+    plt.xlabel(r'$\mathit{f},\,\mathrm{kJ/(nm \cdot mol)}$', fontsize=FS)
+    plt.ylabel(r'$\mathit{\ln(\ln(\tau))},\, \mathrm{ps}$', fontsize=FS)
+    plt.xticks(range(0, 651, 100))
+    plt.grid(True)
+    plt.title("Filtered Dissociation Time Analysis with Prediction Intervals", fontsize=FS - 3)
+    plt.legend(fontsize=10)
+    plt.show()
+
+def plot_residuals(f, rel_res, f_filtered, rel_res_filtered, FS=22):
+    plt.figure(figsize=(10, 4))
+    # Plot residuals for original data:
+    plt.plot(f, rel_res, 'o', color='blue', linewidth=1.5, markersize=6, label='Original Residuals')
+    # Plot residuals for filtered data (outliers removed):
+    plt.plot(f_filtered, rel_res_filtered, 'o', color='black', linewidth=0.75, markersize=2.5, label='Filtered Residuals')
+    plt.axhline(0, color='black', linestyle='-.', linewidth=0.75)
+    plt.xlim([-20, 660])
+    plt.xlabel(r'$\mathit{f},\,\mathrm{kJ/(nm \cdot mol)}$', fontsize=FS)
+    plt.ylabel(r'$\mathrm{Rel.~residuals}$', fontsize=FS)
+    plt.title("Residuals Analysis", fontsize=FS - 2)
+    plt.grid(True)
+    plt.legend(fontsize=10)
+    plt.show()
+
+
+def plot_qq(rel_res, rel_res_filtered, FS=22):
+    plt.figure(figsize=(12, 6))
+
+    ax1 = plt.subplot(1, 2, 1) 
+    stats.probplot(rel_res, dist="norm", plot=ax1)
+    ax1.get_lines()[0].set_marker('o')
+    ax1.get_lines()[0].set_markeredgecolor('blue')
+    ax1.get_lines()[0].set_markersize(5)
+    ax1.get_lines()[1].set_color('blue')
+    ax1.get_lines()[1].set_linewidth(0.75)
+    plt.title("Q-Q Plot of Original Residuals")
+    plt.grid(True)
+
+    ax2 = plt.subplot(1, 2, 2)
+    stats.probplot(rel_res_filtered, dist="norm", plot=ax2)
+    ax2.get_lines()[0].set_marker('o')
+    ax2.get_lines()[0].set_markeredgecolor('black')
+    ax2.get_lines()[0].set_markersize(5)
+    ax2.get_lines()[1].set_color('black')
+    ax2.get_lines()[1].set_linewidth(0.75)
+    plt.title("Q-Q Plot of Filtered Residuals")
+    plt.grid(True)
+
+    plt.suptitle("Q-Q Plot Analysis", fontsize=FS)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.show()
+
+def plot_qq2in1(rel_res, rel_res_filtered, FS=22):
+    plt.figure(figsize=(8, 6)) 
+    ax = plt.subplot(1, 1, 1) 
+
+    probplot(rel_res, dist="norm", plot=ax)
+    ax.get_lines()[0].set_marker('o')
+    ax.get_lines()[0].set_markeredgecolor('blue')
+    ax.get_lines()[0].set_markersize(5)
+    ax.get_lines()[1].set_color('blue')
+    ax.get_lines()[1].set_linewidth(0.75)
+
+    probplot(rel_res_filtered, dist="norm", plot=ax)
+    ax.get_lines()[2].set_marker('o')
+    ax.get_lines()[2].set_markeredgecolor('black')
+    ax.get_lines()[2].set_markersize(5)
+    ax.get_lines()[3].set_color('black')
+    ax.get_lines()[3].set_linewidth(0.75)
+
+    plt.title("Q-Q Plot Analysis of Original and Filtered Residuals", fontsize=FS)
+    plt.grid(True)
+    plt.legend(['Original Residuals', 'Fit (Original)', 'Filtered Residuals', 'Fit (Filtered)'], fontsize=10)
     plt.show()
