@@ -1,8 +1,11 @@
 .DS_Store
 Thumbs.db
 
-_pycache__/
+__pycache__/
+*.py[cod]
 
 .ipynb_checkpoints/
 
 *.log
+
+*.asv
