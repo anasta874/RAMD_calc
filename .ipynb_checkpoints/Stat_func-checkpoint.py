@@ -74,7 +74,7 @@ def plot_filtered_dissociation_data(f, log_log_tau_calc, ftau, f_filtered, log_l
     plt.ylabel(r'$\mathit{\ln(\ln(\tau))},\, \mathrm{ps}$', fontsize=FS)
     plt.xticks(range(0, 651, 100))
     plt.grid(True)
-    plt.title("Filtered Dissociation Time Analysis with Prediction Intervals", fontsize=FS - 3)
+    plt.title("Filtered Dissociation Time Analysis with Prediction Intervals", fontsize=14)
     plt.legend(fontsize=10)
     plt.show()
 

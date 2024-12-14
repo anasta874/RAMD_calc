@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import ScalarFormatter, FuncFormatter
+from matplotlib.ticker import ScalarFormatter, FuncFormatter, MaxNLocator, MultipleLocator
 
 def load_excel(file_path, skip_rows=2):
     data = pd.read_excel(file_path, header=None).to_numpy()
@@ -14,38 +14,65 @@ def filter_data(force_data):
     N = force_data[valid_data, 1]  # Select filtered force values
     return t, N
 
-# Function to calculate tau and lambda values and populate lists
+
+def plot_ln_N_vs_t(t, N):
+    ln_N = np.log(N)
+    plt.figure(figsize=(15, 6))
+    plt.plot(t, ln_N, label='ln(N(t))', marker='o')
+    plt.xlabel('t', fontsize=12)
+    plt.ylabel('ln(N)', fontsize=12)
+    plt.title('ln(N(t))', fontsize=14)
+    unique_t = t[::len(t)//30]
+    plt.xticks(unique_t, labels=[str(int(val)) for val in unique_t], rotation=45)
+    plt.grid(which='major', linestyle='-', linewidth=0.75)
+    plt.legend()
+    plt.show()
+
+
 def calculate_dissociation_rates(t, n, N, N_cut_max, tau_frac, tau_var, lambda_var, pend_var):
     for N_cut in range(N_cut_max):
         # Filter data based on N_cut and tau_frac
         t_fit = t[(N > N_cut) & (t > tau_frac)]
         n_fit = n[(N > N_cut) & (t > tau_frac)]
-
-        if len(t_fit) > 1:  # Check if there is enough data for fitting
+        if len(t_fit) > 1:
             pend = np.polyfit(t_fit, n_fit, 1)
             tau = round((1 / abs(pend[0])) / 1e4, 15)  # Scale tau
             lambda_ = round(pend[0] * 1e4, 15)         # Scale lambda
-
             tau_var.append(tau)
             lambda_var.append(lambda_)
             pend_var.append(pend)
 
-
-def plot_tau_with_cutoff(x_values, y_values, N_cut, tau_var, force_value, output_file=None):
+def plot_tau(x_values, y_values, force_value, output_file=None):
     plt.figure()
-    plt.plot(x_values, y_values, label=r'$\tau$ values')
-    vline = plt.axvline(x=N_cut, color='red', linestyle='--', linewidth=2)
-    plt.legend([vline], ['Cutoff point'], loc='best')
+    plt.plot(x_values, y_values, label=r'$\tau$ values', marker='o')
     plt.title(f"Force {force_value}", fontsize=18)
     plt.ylabel(r'$\tau$, ps', fontsize=18)
     plt.xlabel(r'$N_{cut}$', fontsize=18)
-    plt.gca().yaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x / 1e4:.1f}'))
-    plt.text(0.5, max(y_values)*1.05, r'$ \times 10^4$', fontsize=16, color='black', verticalalignment='bottom', horizontalalignment='center')
     plt.xticks(fontsize=16)
     plt.yticks(fontsize=16)
     plt.grid(True)
-    if output_file:
-        plt.savefig(output_file)
+    plt.legend(loc='best')
+    plt.show()
+
+def plot_tau_with_cutoff(x_values, y_values, N_cut, force_value):
+    plt.figure()
+    plt.plot(x_values, y_values, label=r'$\tau$ values', marker='o')
+    vline = plt.axvline(x=N_cut, color='red', linestyle='--', linewidth=2, label='Cutoff point')
+    plt.title(f"Force {force_value}", fontsize=18)
+    plt.ylabel(r'$\tau$, ps', fontsize=18)
+    plt.xlabel(r'$N_{cut}$', fontsize=18)
+    plt.text(
+        -0.5, max(y_values) * 1.05,
+        r'$\times 10^4$', 
+        fontsize=16, 
+        color='black', 
+        verticalalignment='center', 
+        horizontalalignment='left'
+    )
+    plt.xticks(fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.grid(True)
+    plt.legend(loc='best')
     plt.show()
 
 def plot_init_part_ln_ln(force_value, n, t, t0, tend, output_file=None):
